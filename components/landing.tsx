@@ -1,0 +1,21 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowRight, Check, Flame, LockKeyhole, Search, Sparkles, Users, WandSparkles } from "lucide-react";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+
+export default function Landing() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  async function signIn() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || !email.trim()) { setMessage("Enter your email address to receive a secure sign-in link."); return; }
+    setSending(true);
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/workspace` } });
+    setSending(false);
+    setMessage(error ? error.message : "Secure sign-in link sent. Check your inbox to enter Forge369.");
+  }
+  return <main className="landing"><nav className="landing-nav"><Link href="/" className="landing-brand"><span><Flame size={20} /></span>FORGE<em>369</em></Link><div><a href="#how-it-works">How it works</a><a href="#workflow">Workflow</a><Link className="nav-signin" href="/workspace">Open workspace <ArrowRight size={14} /></Link></div></nav><section className="hero"><div className="hero-copy"><div className="hero-pill"><Sparkles size={14} /> AI Digital Product Foundry</div><h1>Find demand.<br /><span>Forge products.</span><br />Launch profit.</h1><p>Forge369 turns real market signals into creator-ready digital products, launch assets, and delivery systems.</p><div className="hero-actions"><Link href="/workspace" className="hero-primary">Explore the workspace <ArrowRight size={17} /></Link><a href="#how-it-works" className="hero-secondary">See the system</a></div><div className="trust-row"><span><Check size={14} /> Evidence-led discovery</span><span><Check size={14} /> Creator partnerships</span><span><Check size={14} /> Whop-ready launch packs</span></div></div><div className="hero-console"><div className="console-top"><span className="console-dot" /> FORGE369 RESEARCH ENGINE <small>LIVE</small></div><div className="console-score"><div><span>LIVE SIGNALS</span><strong>150<span>+</span></strong><small>sources reviewed</small></div><div className="mini-ring"><strong>87</strong><span>score</span></div></div><div className="console-card"><Search size={17} /><div><small>Profit pocket identified</small><strong>Creator-led newborn care system</strong></div><span>8.9</span></div><div className="console-card"><Users size={17} /><div><small>Creator opportunity</small><strong>24 qualified micro-creators</strong></div><span>Ready</span></div><div className="console-card"><WandSparkles size={17} /><div><small>Product system</small><strong>Offer, ebook, assets and launch pack</strong></div><span>Build</span></div></div></section><section id="how-it-works" className="landing-section"><p className="landing-eyebrow">ONE OPERATING SYSTEM</p><h2>From a market signal to a product people can buy.</h2><div id="workflow" className="landing-steps"><div><b>01</b><Search size={21} /><h3>Discover</h3><p>Investigate buyer pain across real sources and identify viable profit pockets.</p></div><div><b>02</b><Users size={21} /><h3>Partner</h3><p>Find aligned micro-creators, qualify fit, and manage partnership outreach.</p></div><div><b>03</b><WandSparkles size={21} /><h3>Forge</h3><p>Build a complete digital product, launch creative, storefront copy, and delivery pack.</p></div></div></section><section className="signin-panel"><div><p className="landing-eyebrow">FOUNDER ACCESS</p><h2>Enter the Forge369 workspace.</h2><p>Use a secure magic link. Your opportunities, evidence, products, and creator partnerships stay private.</p></div><div className="signin-form"><label>Email address<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="you@company.com" /></label><button onClick={signIn} className="hero-primary" disabled={sending}>{sending ? "Sending…" : "Send secure sign-in link"} <LockKeyhole size={16} /></button>{message && <small>{message}</small>}<Link href="/workspace">Continue in demo workspace <ArrowRight size={14} /></Link></div></section><footer><span>© 2026 Forge369</span><span>Find demand. Forge value. Ship products.</span></footer></main>;
+}
