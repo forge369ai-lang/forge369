@@ -1117,13 +1117,23 @@ function ProductStudio({
   onPackage: () => void;
   onAssets: () => void;
 }) {
+  const [format, setFormat] = useState(active.format);
+  const [stage, setStage] = useState<"charter" | "outline" | "manuscript" | "brand" | "ready">(charterReady ? "outline" : "charter");
+  const [copied, setCopied] = useState(false);
+  const formats = ["Guide + templates", "eBook", "Workbook + tracker", "Mini-course + community"];
+  const isLucid = /lucid dream/i.test(active.title);
+  const chapters = isLucid ? ["Begin at the threshold", "Build dream recall", "Train reality awareness", "Set your intention", "The 28-night practice", "Your first lucid moment", "Stabilise and explore", "Continue with care"] : ["The real problem", "The simple foundation", "The first quick win", "Build the repeatable system", "Troubleshoot common obstacles", "Make progress visible", "Keep the result going"];
+  const brandDirection = isLucid ? "Celestial, immersive and refined. Deep midnight blues, soft moonlight, feather textures and restrained gold accents." : "Modern, calm and premium. Clear hierarchy, generous white space and an intentional visual system that makes the result feel achievable.";
+  function copyBlueprint() {
+    const text = `# ${active.title}\n\nFormat: ${format}\nAudience: ${active.audience}\nProblem: ${active.problem}\n\n## Product structure\n${chapters.map((chapter, index) => `${index + 1}. ${chapter}`).join("\n")}\n\n## Visual direction\n${brandDirection}`;
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); });
+  }
   return (
-    <section className="workflow-card">
+    <section className="workflow-card product-builder">
       <p className="eyebrow">STEP 03 · PRODUCT STUDIO</p>
       <h2>{active.title}</h2>
       <p>
-        Turn a validated opportunity into a defined product before generating
-        assets.
+        Turn a validated profit pocket into a product your creator can proudly put in front of their audience.
       </p>
       <div className="charter-grid">
         <div>
@@ -1143,30 +1153,14 @@ function ProductStudio({
           <strong>From uncertainty to a clear, usable result.</strong>
         </div>
       </div>
-      {!charterReady ? (
-        <button className="primary" onClick={() => setCharterReady(true)}>
-          <Sparkles size={17} /> Generate product charter
-        </button>
-      ) : (
-        <div className="success-panel">
-          <Check size={19} />
-          <div>
-            <strong>Product charter created</strong>
-            <span>
-              Audience, outcome, product format and asset list are ready for
-              production.
-            </span>
-          </div>
-          <div className="studio-actions">
-            <button className="secondary" onClick={onAssets}>
-              Open product assets
-            </button>
-            <button className="primary" onClick={onPackage}>
-              Create launch pack <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="builder-progress">
+        {["Charter", "Outline", "Manuscript", "Brand", "Ready"].map((label, index) => <div className={["charter", "outline", "manuscript", "brand", "ready"].indexOf(stage) >= index ? "complete" : ""} key={label}><span>{["charter", "outline", "manuscript", "brand", "ready"].indexOf(stage) > index ? <Check size={13} /> : index + 1}</span><small>{label}</small></div>)}
+      </div>
+      {stage === "charter" && <div className="builder-panel"><div className="form-head"><div><p className="eyebrow">FORMAT DECISION</p><h3>Choose the product vehicle</h3></div><span className="status"><CircleDot size={14} /> Creator-led product</span></div><div className="format-grid">{formats.map((option) => <button key={option} className={format === option ? "format-option selected" : "format-option"} onClick={() => setFormat(option)}><strong>{option}</strong><span>{option === "eBook" ? "A polished, authority-building read." : option === "Mini-course + community" ? "A guided learning experience with ongoing support." : option === "Workbook + tracker" ? "Implementation-led tools and repeatable action." : "A clear transformation with practical support assets."}</span></button>)}</div><button className="primary" onClick={() => { setCharterReady(true); setStage("outline"); }}><Sparkles size={17} /> Create product charter</button></div>}
+      {stage === "outline" && <div className="builder-panel"><div className="form-head"><div><p className="eyebrow">TABLE OF CONTENTS</p><h3>A reader journey with a purpose</h3></div><button className="secondary" onClick={copyBlueprint}><Copy size={14} /> {copied ? "Copied" : "Copy blueprint"}</button></div><div className="chapter-list">{chapters.map((chapter, index) => <div key={chapter}><span>{String(index + 1).padStart(2, "0")}</span><strong>{chapter}</strong><small>{index === 0 ? "Set expectation and establish the reader’s starting point." : index === chapters.length - 1 ? "A clear next-step plan beyond the first result." : "Teach one practical idea, then make it actionable."}</small></div>)}</div><button className="primary" onClick={() => setStage("manuscript")}><FileText size={16} /> Generate manuscript plan</button></div>}
+      {stage === "manuscript" && <div className="builder-panel"><div className="form-head"><div><p className="eyebrow">MANUSCRIPT SYSTEM</p><h3>Build depth without overwhelming the buyer</h3></div><span className="status"><Check size={14} /> Structured for completion</span></div><div className="manuscript-grid"><div><strong>Core lesson</strong><span>Explain the concept in plain language and answer the reader’s predictable doubts.</span></div><div><strong>Real-world example</strong><span>Use a relatable scenario that proves the lesson has a place in normal life.</span></div><div><strong>Action step</strong><span>End each section with one useful action, template or prompt.</span></div></div><div className="builder-note"><Sparkles size={17} /><span>AI-assisted creation will draft section by section, with founder and creator review before anything is published.</span></div><button className="primary" onClick={() => setStage("brand")}>Set visual direction <ArrowRight size={16} /></button></div>}
+      {stage === "brand" && <div className="builder-panel"><div className="form-head"><div><p className="eyebrow">BRAND + CREATIVE DIRECTION</p><h3>Make the product feel worth keeping</h3></div><span className="status"><Sparkles size={14} /> Creative brief ready</span></div><div className="brand-brief"><div><span>Visual direction</span><strong>{brandDirection}</strong></div><div><span>Creative deliverables</span><strong>Cover, product thumbnails, chapter imagery, social launch assets and Whop store visuals.</strong></div></div><div className="builder-note"><Eye size={17} /><span>Higgsfield can become the production layer for these images once its account and API access are connected.</span></div><button className="primary" onClick={() => setStage("ready")}><Check size={16} /> Mark product blueprint ready</button></div>}
+      {stage === "ready" && <div className="success-panel"><Check size={19} /><div><strong>Product blueprint ready for production</strong><span>Your product format, reader journey, manuscript system and brand direction are now defined. Next, create customer assets and the Whop launch pack.</span></div><div className="studio-actions"><button className="secondary" onClick={onAssets}>Open product assets</button><button className="primary" onClick={onPackage}>Create launch pack <ArrowRight size={16} /></button></div></div>}
     </section>
   );
 }
