@@ -40,6 +40,7 @@ const nav = [
   ["Opportunities", Target],
   ["Creator Network", Users],
   ["Outreach Studio", Mail],
+  ["Partnership Projects", Handshake],
   ["Product Studio", Box],
   ["Product Assets", FolderLock],
   ["Launch Packs", FileText],
@@ -312,6 +313,7 @@ export default function Dashboard() {
         )}
         {view === "Creator Network" && <CreatorNetwork />}
         {view === "Outreach Studio" && <OutreachStudio active={active} />}
+        {view === "Partnership Projects" && <PartnershipProjects active={active} onBuild={() => setView("Product Studio")} onLaunch={() => setView("Launch Packs")} />}
         {view === "Product Studio" && (
           <ProductStudio
             active={active}
@@ -513,6 +515,8 @@ function CreatorNetwork() {
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
   const [niche, setNiche] = useState("");
+  useEffect(() => { const saved = window.localStorage.getItem("forge369-creators"); if (!saved) return; try { setCreators(JSON.parse(saved)); } catch { window.localStorage.removeItem("forge369-creators"); } }, []);
+  useEffect(() => { window.localStorage.setItem("forge369-creators", JSON.stringify(creators)); }, [creators]);
   function addCreator(event: React.FormEvent) {
     event.preventDefault();
     if (!name.trim() || !handle.trim()) return;
@@ -767,6 +771,27 @@ A short discovery call to verify audience need, product angle and launch fit.`;
     </section>
   );
 }
+type PartnershipProjectRecord = { id: string; creator: string; handle: string; followers: string; split: string; status: "Prospect" | "Negotiating" | "Approved" | "Live"; opportunityId: string; opportunityTitle: string; whopUrl: string; price: number; sales: number; refunds: number; notes: string };
+
+function PartnershipProjects({ active, onBuild, onLaunch }: { active: Opportunity; onBuild: () => void; onLaunch: () => void }) {
+  const [projects, setProjects] = useState<PartnershipProjectRecord[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [creator, setCreator] = useState("");
+  const [handle, setHandle] = useState("");
+  const [followers, setFollowers] = useState("10k–100k");
+  const [split, setSplit] = useState("50 / 50");
+  useEffect(() => { const saved = window.localStorage.getItem("forge369-partnership-projects"); if (!saved) return; try { const parsed = JSON.parse(saved) as PartnershipProjectRecord[]; setProjects(parsed); if (parsed[0]) setSelectedId(parsed[0].id); } catch { window.localStorage.removeItem("forge369-partnership-projects"); } }, []);
+  const selected = projects.find((project) => project.id === selectedId);
+  function persist(next: PartnershipProjectRecord[]) { setProjects(next); window.localStorage.setItem("forge369-partnership-projects", JSON.stringify(next)); }
+  function createProject(event: React.FormEvent) { event.preventDefault(); if (!creator.trim() || !handle.trim()) return; const record: PartnershipProjectRecord = { id: `partner-${Date.now()}`, creator: creator.trim(), handle: handle.trim(), followers, split, status: "Prospect", opportunityId: active.id, opportunityTitle: active.title, whopUrl: "", price: 37, sales: 0, refunds: 0, notes: "" }; const next = [record, ...projects]; persist(next); setSelectedId(record.id); setCreator(""); setHandle(""); }
+  function update(patch: Partial<PartnershipProjectRecord>) { if (!selected) return; const next = projects.map((project) => project.id === selected.id ? { ...project, ...patch } : project); persist(next); }
+  function buildProject() { if (selected) window.localStorage.setItem("forge369-active-partnership", JSON.stringify(selected)); onBuild(); }
+  const share = selected ? (selected.split.startsWith("60") ? 0.6 : selected.split.startsWith("70") ? 0.7 : 0.5) : 0.5;
+  const gross = selected ? selected.sales * selected.price : 0;
+  const net = selected ? Math.max(0, gross - selected.refunds * selected.price) : 0;
+  return <section className="partnership-projects"><div className="partner-hero"><div><p className="eyebrow">PARTNERSHIP OPERATING SYSTEM</p><h2>Turn creator interest into a shared launch.</h2><p>Each project links one creator to one profit pocket, then carries the work through terms, product creation, Whop publishing and revenue accounting.</p></div><div className="partner-hero-stat"><Handshake size={21} /><strong>{projects.length}</strong><span>active projects</span></div></div><div className="project-layout"><aside className="project-rail"><div className="form-head"><div><p className="eyebrow">PROJECTS</p><h3>Partnership pipeline</h3></div><span className="status"><CircleDot size={14} /> Local alpha</span></div>{projects.length ? projects.map((project) => <button key={project.id} onClick={() => setSelectedId(project.id)} className={project.id === selectedId ? "project-card selected" : "project-card"}><span>{project.status}</span><strong>{project.creator}</strong><small>{project.opportunityTitle}</small></button>) : <p className="project-empty">Create your first creator partnership project below.</p>}<button className="secondary full-width" onClick={() => setSelectedId("")}><Plus size={14} /> New project</button></aside><div className="project-workbench">{!selected ? <form className="project-create" onSubmit={createProject}><p className="eyebrow">NEW PARTNERSHIP PROJECT</p><h3>Link a creator to this profit pocket</h3><p>Create a real operating record first. You can add creators manually from Listkit, Instagram or referrals while integrations are still pending.</p><div className="project-form-grid"><label>Creator name<input value={creator} onChange={(event) => setCreator(event.target.value)} placeholder="e.g. Sarah Adams" /></label><label>Creator handle<input value={handle} onChange={(event) => setHandle(event.target.value)} placeholder="@sarahadams" /></label><label>Audience size<select value={followers} onChange={(event) => setFollowers(event.target.value)}><option>10k–25k</option><option>25k–50k</option><option>50k–100k</option><option>100k+</option></select></label><label>Initial revenue split<select value={split} onChange={(event) => setSplit(event.target.value)}><option>50 / 50</option><option>60 creator / 40 Forge369</option><option>70 creator / 30 Forge369</option></select></label></div><div className="linked-pocket"><span>LINKED PROFIT POCKET</span><strong>{active.title}</strong><p>{active.problem}</p></div><button className="primary" type="submit"><Handshake size={16} /> Create partnership project</button></form> : <><div className="project-top"><div><p className="eyebrow">{selected.status.toUpperCase()} PARTNERSHIP</p><h3>{selected.creator} <span>{selected.handle}</span></h3><p>Linked to <strong>{selected.opportunityTitle}</strong> · {selected.followers} audience</p></div><div className="project-top-actions"><button className="secondary" onClick={buildProject}><Box size={15} /> Build product</button><button className="primary" onClick={onLaunch}><ArrowRight size={15} /> Launch pack</button></div></div><div className="partner-metrics"><div><span>Deal split</span><strong>{selected.split}</strong><small>Creator / Forge369</small></div><div><span>Gross sales</span><strong>${gross.toFixed(0)}</strong><small>{selected.sales} customer sales</small></div><div><span>Creator share</span><strong>${(net * share).toFixed(0)}</strong><small>Based on net revenue</small></div><div><span>Forge369 share</span><strong>${(net * (1 - share)).toFixed(0)}</strong><small>Before platform costs</small></div></div><div className="deal-launch-grid"><section><p className="eyebrow">DEAL ROOM</p><h4>Terms and commitments</h4><label>Partnership status<select value={selected.status} onChange={(event) => update({ status: event.target.value as PartnershipProjectRecord["status"] })}><option>Prospect</option><option>Negotiating</option><option>Approved</option><option>Live</option></select></label><label>Revenue split<select value={selected.split} onChange={(event) => update({ split: event.target.value })}><option>50 / 50</option><option>60 creator / 40 Forge369</option><option>70 creator / 30 Forge369</option></select></label><label>Creator promotion commitment<textarea value={selected.notes} onChange={(event) => update({ notes: event.target.value })} placeholder="e.g. Two reels, three stories and a launch email." /></label><p className="terms-note"><LockKeyhole size={14} /> Record intent here, then put ownership, permissions, payment timing and refunds into a signed agreement.</p></section><section><p className="eyebrow">LAUNCH CONTROL</p><h4>Whop and creator campaign</h4><label>Whop product URL<input value={selected.whopUrl} onChange={(event) => update({ whopUrl: event.target.value })} placeholder="https://whop.com/..." /></label><label>Customer price (USD)<input type="number" min="0" value={selected.price} onChange={(event) => update({ price: Number(event.target.value) || 0 })} /></label><label>Recorded customer sales<input type="number" min="0" value={selected.sales} onChange={(event) => update({ sales: Number(event.target.value) || 0 })} /></label><label>Refunded sales<input type="number" min="0" value={selected.refunds} onChange={(event) => update({ refunds: Number(event.target.value) || 0 })} /></label><button className="secondary" onClick={() => update({ sales: selected.sales + 1 })}><Check size={14} /> Record a sale</button></section></div><div className="project-next"><Check size={16} /><span>{selected.status === "Prospect" ? "Next: qualify the audience and use Outreach Studio to open the conversation." : selected.status === "Negotiating" ? "Next: finalise the written deal and lock the creator’s promotion commitments." : selected.status === "Approved" ? "Next: build the creator-specific product, then prepare the Whop launch." : "Live project: keep revenue and refund counts accurate while collecting customer feedback."}</span></div></>}</div></div></section>;
+}
+
 function Discover({
   scanState,
   runScan,
@@ -1120,6 +1145,8 @@ function ProductStudio({
   const [format, setFormat] = useState(active.format);
   const [stage, setStage] = useState<"charter" | "outline" | "manuscript" | "brand" | "ready">(charterReady ? "outline" : "charter");
   const [copied, setCopied] = useState(false);
+  const [partnership, setPartnership] = useState<{ creator: string; handle: string; opportunityId: string; split: string } | null>(null);
+  useEffect(() => { const saved = window.localStorage.getItem("forge369-active-partnership"); if (!saved) return setPartnership(null); try { const project = JSON.parse(saved); setPartnership(project.opportunityId === active.id ? project : null); } catch { setPartnership(null); } }, [active.id]);
   const formats = ["Guide + templates", "eBook", "Workbook + tracker", "Mini-course + community"];
   const isLucid = /lucid dream/i.test(active.title);
   const chapters = isLucid ? ["Begin at the threshold", "Build dream recall", "Train reality awareness", "Set your intention", "The 28-night practice", "Your first lucid moment", "Stabilise and explore", "Continue with care"] : ["The real problem", "The simple foundation", "The first quick win", "Build the repeatable system", "Troubleshoot common obstacles", "Make progress visible", "Keep the result going"];
@@ -1135,6 +1162,7 @@ function ProductStudio({
       <p>
         Turn a validated profit pocket into a product your creator can proudly put in front of their audience.
       </p>
+      {partnership && <div className="partner-build-banner"><Handshake size={17} /><span>Building for <strong>{partnership.creator}</strong> ({partnership.handle}) under the proposed <strong>{partnership.split}</strong> partnership.</span></div>}
       <div className="charter-grid">
         <div>
           <span>Audience</span>
